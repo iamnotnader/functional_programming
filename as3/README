@@ -1,0 +1,7 @@
+Help: No help was received.
+Design Decisions: Used a counter to keep track 
+       of the number of unclosed comments seen.
+       If the total was anything other than zero
+       at the end, there a comment error. Works
+       for nested comments, too.
+Feedback: Good assignment. Enjoyed it thoroughly.

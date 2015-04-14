@@ -1,0 +1,65 @@
+exp: 
+    exp LPAREN exp RPAREN       (A.Pos((exp1left,RPARENright), 
+	                             A.Call (exp1,exp2)))
+  | LPAREN exp RPAREN			  (A.Pos((LPARENleft,RPARENright), 
+	                             A.Int (exp1)))
+  | ID								  (A.Pos((IDleft,IDright), 
+	                             A.ID (ID)))
+  | NUM								  (A.Pos((NUMleft,NUMright), 
+	                             A.INT (NUM)))
+  | exp SEMI exp					  (A.Pos(A.Pos(exp1left, exp2right) ,(A.Pos((exp1left,exp1right), 
+	                             exp1),A.Pos((exp2left,exp2right), 
+	                             exp2))))
+				
+				
+prog: fun EOF
+
+fun: 
+	 FUN ID LPAREN ID (*COLON*) type RPAREN (*COLON*) type EQ exp		()
+										  
+										  
+  | LPAREN exp RPAREN			  ()
+  | ID								  ()
+  | INT								  ()
+  | exp SEMICOLON exp			  ()		  
+	 (*unary operators*)
+  | MINUS exp						  ()
+  | NOT exp							  ()
+  | BANG exp						  ()
+  | PROJ exp						  ()
+	 (*binary operators*)
+  | exp PLUS exp					  ()
+  | exp MINUS exp					  ()
+  | exp TIMES exp					  ()
+  | exp AND exp					  ()
+  | exp OR exp						  ()
+  | exp EQ exp					     ()
+  | exp LT exp						  ()
+  | exp GT exp 					  ()
+  | exp ASSIGN exp				  ()
+  | exp COMMA exp					  ()
+  | exp (*COLON*)type				  ()
+  | IF exp THEN exp ELSE exp 	  ()
+  | IF exp THEN exp				  ()
+  | WHILE exp DO exp				  ()
+  | LET ID ASSIGN exp IN exp	  ()
+  | REF exp							  ()
+	 
+type:
+	 INT								  ()
+  | type COMMA type	    		  ()
+  | type ARROW type			     ()
+  | type REF						  ()
+  | LPAREN type RPAREN 			  ()
+  
+  
+  FUN ID LPAREN ID COLON ID RPAREN COLON ID EQ
+  
+  
+  
+func:
+	FUN id LPAREN id COLON tp RPAREN COLON tp EQ exp		(((exp1left,RPARENright):ErrorMsg.pos2, 
+	                             									 (id1, id2, tp1, tp2, exp)):Absyn.fundec)
+tp:
+	
+id: 

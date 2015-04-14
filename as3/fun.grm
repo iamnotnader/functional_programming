@@ -1,0 +1,120 @@
+structure A = Absyn
+structure S = Symbol
+
+%%
+
+%right ARROW
+%right IF
+%right DO
+%left	 PLUS MINUS
+%left  TIMES
+
+%term ARROW | FUN | IN | LET | ELSE | THEN | IF | ASSIGN 
+	 | BANG | REF | DO | WHILE | OR | NOT | AND | GT | EQ
+    | LT | TIMES | MINUS | PLUS | RPAREN | LPAREN
+    | COLON | SEMICOLON | COMMA | ID of string | PROJ of int | INT of int | EOF
+%nonterm exp of A.exp | explist of A.exp list | start | prog of A.prog | 
+			tp of A.tp | oper of A.oper | func of A.func | fundec of A.fundec
+			| funseq of A.fundec list | tplist of A.tp list
+%pos ErrorMsg.pos
+%start prog
+%noshift EOF
+%verbose
+%eop EOF
+%name Fun
+
+%%
+prog:
+	funseq EOF	(funseq)
+exp:
+	exp LPAREN exp RPAREN       (A.Pos((exp1left,RPARENright), 
+	                             A.Call (exp1,exp2)))
+|	LPAREN exp RPAREN				 (A.Pos((LPARENleft, RPARENright), exp1))
+|	ID									 (A.Pos((IDleft, IDright), A.Id(S.symbol(ID1))))
+|	INT								 (A.Pos((INTleft, INTright), A.Int(INT1)))
+|	exp SEMICOLON exp				(let val it1 = exp1
+											  val it2 = exp2
+										 in A.Pos((0, 0), A.Id(S.symbol(""))) end)
+(*unary operators*)
+| MINUS exp							 (A.Pos((MINUSleft, exp1right), A.Op(A.Sub,(A.Int(0)::exp1::nil))))
+| NOT exp							 (A.Pos((NOTleft, exp1right), if exp = A.Int(0) then A.Int(1) else A.Int(0)))
+| BANG exp							 (A.Pos((BANGleft, exp1right), A.Op(A.Get,(exp1::nil))))
+| PROJ exp							 (A.Pos((PROJleft, exp1right), A.Proj(PROJ, exp1)))
+(*binary operators*)
+| exp oper exp						 (A.Pos((exp1left, exp2right), A.Op(oper,(exp1::exp2::nil))))
+(*expression list*)
+| LT GT								 (A.Pos((LTleft, GTleft), A.Tuple(nil)))
+| LT explist GT					 (A.Pos((LTleft, GTright), A.Tuple(explist)))
+| exp COLON tp						 (A.Pos((exp1left, tp1right), A.Constrain(exp1, tp)))
+| IF exp THEN exp ELSE exp		 (A.Pos((IFleft, exp3right), A.If(exp1, exp2, exp3)))
+| IF exp THEN exp					 (A.Pos((IFleft, exp2right), A.If(exp1, exp2, A.Tuple(nil))))
+| WHILE exp DO exp				 (A.Pos((WHILEleft, exp2right), A.While(exp1, exp2)))
+| exp AND exp						 (if (exp1 <> A.Int(0)) then 
+												(
+												if (exp2 <> A.Int(0)) then 
+													A.Pos((exp1left, exp2right), A.Int(1))
+												else 
+													A.Pos((exp1left, exp2right), A.Int(0))
+												)
+										  else
+										  		A.Pos((exp1left, exp2right), A.Int(0)) )
+| exp OR exp						 (if (exp1 <> A.Int(0)) then
+												(
+												A.Pos((exp1left, exp2right), A.Int(1))
+												)
+										  else	
+										  		(
+												if (exp2 <> A.Int(0)) then
+													(
+														A.Pos((exp1left, exp2right), A.Int(1))
+													)
+												else
+													A.Pos((exp1left, exp2right), A.Int(0))
+												)									
+										 )
+
+| LET ID EQ exp IN exp			 (A.Pos((LETleft, exp2right), A.Let(S.symbol(ID1), exp1, exp2)))
+
+explist:
+	exp 								(exp::nil)
+|	explist COMMA exp				(explist @ (exp::nil))
+
+oper:
+	PLUS								(A.Add)
+|	MINUS								(A.Sub)
+|	TIMES								(A.Mul)
+|	EQ									(A.Eq)
+|	LT									(A.LT)
+|	GT									(A.LT)
+|	ASSIGN							(A.Set)
+
+func:
+	FUN ID LPAREN ID COLON tp RPAREN COLON tp EQ exp	((S.symbol(ID1), S.symbol(ID2), tp1, tp2, exp1))
+
+tp:
+	(*SHOULD THROW ERROR*)
+	ID									 (if (ID = "Inttp") then
+												A.Inttp
+										  else 
+										  		(ErrorMsg.error((IDleft, IDright), "Invalid type"); A.Inttp))
+|	LPAREN tp RPAREN				 (tp)
+|  tp ARROW tp						 (A.Arrowtp(tp1, tp2))
+|	tp REF							 (A.Reftp(tp1))
+|  LT GT								 (A.Tupletp(nil))
+|	LT tplist GT					 (A.Tupletp(tplist))
+
+tplist:
+	tp								(tp::nil)
+|	tplist COMMA tp			(tplist @ (tp::nil)) 
+	
+funseq:
+	fundec						(fundec::nil)
+|  fundec funseq				(fundec::funseq)
+
+fundec:
+	func							(((funcleft, funcright), func))
+	
+(*
+exp ::= (exp) | id | num | exp; exp |/ un exp /| exp bin exp | <exp, ..., exp> | exp ( exp ) | exp : tp
+| if exp then exp else exp | if exp then exp | while exp do exp | let id = exp in exp | ref exp
+*)

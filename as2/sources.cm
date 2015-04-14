@@ -1,0 +1,22 @@
+Group is
+
+ $/basis.cm
+ $/smlnj-lib.cm
+
+(* This first batch of files is useful for LEXICAL ANALYZER *)
+errormsg.sml
+tokens.sig
+tokens.sml
+fun.lex
+runlex.sml
+
+(* This next batch of files is useful for ABSTRACT SYNTAX *)
+symbol.sml
+table.sig  table.sml  
+absyn.sml
+pp.sig pp.sml
+funpp.sig funpp.sml
+heap.sig  heap.sml
+eval.sig  eval.sml
+test.sml
+myfun.sml

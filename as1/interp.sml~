@@ -1,0 +1,57 @@
+structure Interp = struct
+
+    structure S = SLP
+    (* Use S.CompoundStm, S.Plus, S.IdExp, etc. to refer to
+     * items defined in structure SLP (see slp.sml) *)
+    
+    type table = (S.id * int) list
+
+    fun update(tbl, ident, newval) = (ident, newval)::tbl
+    (*assume the first occurrence of any id takes precedence
+      over any later occurrences in the table*)
+
+    exception UndefinedVariable of string
+
+    fun lookup (tbl:table, ident) = 
+          case tbl of 
+            nil => raise UndefinedVariable(ident)
+          | (x, xval)::xs => if ident=x then xval
+			     else lookup(xs, ident)
+
+    exception InterpUnimplemented
+
+    fun interpOp S.Plus  = Int.+
+      | interpOp S.Minus = Int.-
+      | interpOp S.Times = Int.*
+      | interpOp S.Div   = Int.div
+
+    fun interpStm (s:S.stm, tbl:table) = 
+      case s of 
+        S.CompoundStm(s1, s2) =>
+          interpStm(s2, interpStm(s1, tbl))
+      | S.AssignStm(x, e) =>
+          let val result = interpExp(e, tbl)
+	  in  update(#2(result), x, #1(result))
+	  end
+      | S.PrintStm nil => tbl
+      | S.PrintStm (elist : SLP.exp list) =>
+      	  let val result = interpExp(hd(elist), tbl)
+              val temp = print(Int.toString(#1(result)))
+	  in  interpStm(S.PrintStm tl(elist), #2(result))
+          end
+
+    and interpExp (e:S.exp, tbl:table) =
+      case e of
+        S.IdExp x => (lookup(tbl, x), tbl) 
+      | S.NumExp y => (y, tbl)
+      | S.OpExp(el, binop, er) => 
+          let val resultl = interpExp(el, tbl)
+	      val resultr = interpExp(er, #2(resultl))
+	  in (interpOp(binop) (#1(resultl), #1(resultr)), #2(resultr))
+	  end
+      | S.EseqExp(s1, e1) => 
+          interpExp(e1, interpStm(s1,tbl))
+
+    fun interp s = 
+          (interpStm(s, nil); ())
+end

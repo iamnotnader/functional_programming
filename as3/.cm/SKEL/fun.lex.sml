@@ -1,0 +1,2 @@
+Skeleton 5
+ae"FunLexFun"i2aä¢Tokens"gp1c"Fun_TOKENS"f6d"Char"Cä¢String"ä¢TextIO"ÿä¢Vector"d"ErrorMsg"Nh3aä¢yyInput"jh3aä¢TIO"gp1ÿ<ad"TSIO"gp2ÿ-d"StreamIO"ad"TPIO"gp1d"TextPrimIO"è0aä¢UserDeclarations"ÿ‚)bbd2egp1ÿ‚,f7d"IO"d"Int"Cÿ3ÿÿ‚,ÿÿNf0f1ÿ
